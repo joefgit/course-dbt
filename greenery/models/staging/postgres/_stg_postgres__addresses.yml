@@ -1,0 +1,8 @@
+models:
+  - name: stg_postgres__addresses
+    description: base table from postgres representing addresses in greenery platform
+    columns:
+      - name: address_guid
+        tests:
+          - unique
+          - not_null

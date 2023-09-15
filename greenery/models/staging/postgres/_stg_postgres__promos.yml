@@ -1,0 +1,8 @@
+models:
+  - name: stg_postgres__promos
+    description: base table from postgres representing promos in greenery platform
+    columns:
+      - name: promo_id
+        tests:
+          - unique
+          - not_null

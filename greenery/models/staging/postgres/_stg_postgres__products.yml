@@ -1,0 +1,8 @@
+models:
+  - name: stg_postgres__products
+    description: base table from postgres representing products in greenery platform
+    columns:
+      - name: product_guid
+        tests:
+          - unique
+          - not_null

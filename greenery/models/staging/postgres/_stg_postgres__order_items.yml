@@ -1,0 +1,10 @@
+models:
+  - name: stg_postgres__order_items
+    description: base table from postgres representing order_items in greenery platform
+    columns:
+      - name: order_guid
+        tests:
+          - not_null
+      - name: product_guid
+        tests:
+          - not_null

@@ -1,0 +1,101 @@
+-----------------------------------------------------------------------
+-- How many users do we have?
+-----------------------------------------------------------------------
+select count (distinct user_guid)
+from stg_postgres__users; 
+
+-- answer: 130 users
+
+-----------------------------------------------------------------------
+-- On average, how many orders do we receive per hour?
+-----------------------------------------------------------------------
+with by_hour as (
+                select  
+                        to_date(create_at_utc) as CreateDate,
+                        date_part(hour, create_at_utc) as CreateHour,
+                        count(distinct order_guid) as order_count
+                    from stg_postgres__orders
+                    group by CreateDate, CreateHour
+                )
+select avg(order_count)
+from by_hour;
+ 
+-- answer: 7.5 orders   
+
+-----------------------------------------------------------------------
+-- On average, how long does an order take from being placed to being delivered?
+-----------------------------------------------------------------------
+with order_duration as (
+                        select 
+                                t1.order_guid, 
+                                t1.created_at_utc as checkout_time, 
+                                t2.created_at_utc as shipped_time, 
+                                datediff(minute, t1.created_at_utc, t2.created_at_utc) as minutes_diff
+                        from 
+                                (
+                                select order_guid, created_at_utc
+                                from stg_postgres__events
+                                where event_type = 'checkout'
+                                ) as t1
+                            join 
+                                (
+                                select order_guid, created_at_utc
+                                from stg_postgres__events
+                                where event_type = 'package_shipped'
+                                ) t2
+                            on
+                                t1.order_guid = t2.order_guid
+                        )
+select avg(minutes_diff)
+from order_duration;
+
+-- answer: 327.61 minutes 
+
+-----------------------------------------------------------------------
+-- How many users have only made one purchase? Two purchases? Three+ purchases?
+-- Note: you should consider a purchase to be a single order. In other words, if a user places one order for 3 products, they are considered to have made 1 purchase.
+-----------------------------------------------------------------------
+with order_count as (
+                    select 
+                        user_guid,
+                        count(distinct order_guid) as ord_count
+                    from stg_postgres__orders
+                    group by user_guid 
+                    ),
+user_group as (
+                select  
+                    user_guid,
+                    ord_count,
+                    case 
+                        when ord_count = 1 then '1'
+                        when ord_count = 2 then '2'
+                        when ord_count >= 3 then '3+'
+                    end as ord_group
+                from order_count
+                )
+select
+    ord_group,
+    count(*)
+from user_group
+group by ord_group;
+
+-- answer 
+--    1 order - 25
+--    2 orders - 28
+--    3+ orders - 71
+
+-----------------------------------------------------------------------
+--On average, how many unique sessions do we have per hour?
+-----------------------------------------------------------------------
+with by_hour as (
+                select  
+                        to_date(create_at_utc) as CreateDate,
+                        date_part(hour, create_at_utc) as CreateHour,
+                        count(distinct event_guid) as events_count
+                    from stg_postgres__events
+                    group by CreateDate, CreateHour
+                )
+select avg(events_count)
+from by_hour;
+
+ -- Answer: 61.26 sessions   

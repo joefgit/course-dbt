@@ -1,0 +1,8 @@
+models:
+  - name: stg_postgres__events
+    description: base table from postgres representing events in greenery platform
+    columns:
+      - name: events_guid
+        tests:
+          - unique
+          - not_null
